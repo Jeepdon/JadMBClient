@@ -5,30 +5,30 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 
 @Mojo(name = "client")
 public class Client extends AbstractMojo {
 
     private Socket clientSocket;
-    private PrintWriter out;
-    private BufferedReader in;
+    private MessageProcessor messageHandler;
     private final Logger logger;
-    private final String name;
-
     private final String IP = "0";
     private final int PORT = 6989;
+    private ArrayList<MessageListener> listeners;
 
 
-    public Client(String name) {
-        this.name = name;
+    public Client() {
+        listeners = new ArrayList<>();
         logger = new Logger("JadMBClient");
         if (startConnection()) {
-            new MessageHandler(clientSocket, name);
+            messageHandler = new MessageProcessor(this,clientSocket);
+        } else {
+            logger.error("Message handler could not start correctly!");
+            logger.error("Shutting down");
+            System.exit(400);
         }
     }
 
@@ -42,6 +42,19 @@ public class Client extends AbstractMojo {
         return true;
     }
 
+    public void sendMessage(Message message) throws IOException {
+        messageHandler.sendMessage(message);
+    }
+
+    public void addMessageListener(MessageListener messageListener) {
+        if (!listeners.contains(messageListener)) {
+            listeners.add(messageListener);
+        }
+    }
+
+    public ArrayList<MessageListener> getListeners() {
+        return listeners;
+    }
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {}
