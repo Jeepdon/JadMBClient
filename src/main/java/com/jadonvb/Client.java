@@ -19,10 +19,12 @@ public class Client extends AbstractMojo {
     private final String IP = "192.168.2.17";
     private final int PORT = 6989;
     private ArrayList<MessageListener> listeners;
+    private ServerType serverType;
 
 
-    public Client() {
+    public Client(ServerType serverType) {
         listeners = new ArrayList<>();
+        this.serverType = serverType;
         logger = new Logger("JadMBClient");
         if (startConnection()) {
             messageHandler = new MessageProcessor(this,clientSocket);
@@ -40,14 +42,20 @@ public class Client extends AbstractMojo {
     private void sendInitialMessage() {
         Message message = new Message();
         message.setType(MessageTypes.INITIAL_MESSAGE);
-        message.setSender(getIP());
-        message.setReceiver("velocity");
-
         ArrayList<String> arguments = new ArrayList<>();
+        if (serverType.equals(ServerType.PROXY)) {
+            message.setSender("velocity");
+            arguments.add("velocity");
+        } else {
+            message.setSender(getIP());
+            arguments.add(getIP());
+        }
 
-        arguments.add(getIP());
+        message.setReceiver("MB");
 
         message.setArguments(arguments);
+
+        sendMessage(message);
     }
 
     public String getConnected() {
