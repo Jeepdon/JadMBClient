@@ -45,6 +45,7 @@ public class MessageProcessor extends Thread {
     }
 
     private void handleMessage(String messageString) {
+        logger.log("hoihoi");
         try {
             Message message = gson.fromJson(messageString, Message.class);
             for (MessageListener messageListener : client.getListeners()) {

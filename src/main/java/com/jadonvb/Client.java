@@ -93,9 +93,20 @@ public class Client extends AbstractMojo {
     public void sendMessage(Message message) {
         try {
             messageHandler.sendMessage(message);
+            //log(message);
         } catch (IOException e) {
             logger.error("Could not send message!");
         }
+    }
+
+    private void log(Message message) {
+        logger.log("New message: ");
+        logger.log("Sender: " + message.getSender());
+        logger.log("Receiver: " + message.getReceiver());
+        logger.log(message.getType().toString());
+        try {
+            logger.log(message.getArguments().get(0));
+        } catch (NullPointerException ignored){}
     }
 
     public void addMessageListener(MessageListener messageListener) {
