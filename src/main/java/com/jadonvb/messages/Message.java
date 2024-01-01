@@ -1,4 +1,6 @@
-package com.jadonvb;
+package com.jadonvb.messages;
+
+import com.jadonvb.enums.MessageType;
 
 import java.util.ArrayList;
 
@@ -6,7 +8,7 @@ public class Message {
 
     private String sender;
     private String receiver;
-    private MessageTypes type;
+    private MessageType type;
     private ArrayList<String> arguments;
 
     public String getReceiver() {
@@ -29,7 +31,7 @@ public class Message {
         this.arguments = message;
     }
 
-    public void setType(MessageTypes type) {
+    public void setType(MessageType type) {
         this.type = type;
     }
 
@@ -37,7 +39,7 @@ public class Message {
         return arguments;
     }
 
-    public MessageTypes getType() {
+    public MessageType getType() {
         return type;
     }
 }

@@ -1,6 +1,8 @@
-package com.jadonvb;
+package com.jadonvb.messages;
 
 import com.google.gson.Gson;
+import com.jadonvb.Client;
+import com.jadonvb.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,7 +38,7 @@ public class MessageProcessor extends Thread {
     public void run() {
         while (true) {
             try {
-                handleMessage(in.readLine());
+                processMessage(in.readLine());
             } catch (IOException e) {
                 logger.error("Could not read incoming message!");
                 throw new RuntimeException(e);
@@ -44,8 +46,7 @@ public class MessageProcessor extends Thread {
         }
     }
 
-    private void handleMessage(String messageString) {
-        logger.log("hoihoi");
+    private void processMessage(String messageString) {
         try {
             Message message = gson.fromJson(messageString, Message.class);
             for (MessageListener messageListener : client.getListeners()) {

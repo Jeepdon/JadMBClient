@@ -1,5 +1,11 @@
 package com.jadonvb;
 
+import com.jadonvb.enums.MessageType;
+import com.jadonvb.enums.ServerType;
+import com.jadonvb.messages.Message;
+import com.jadonvb.messages.MessageListener;
+import com.jadonvb.messages.MessageProcessor;
+import com.jadonvb.misc.ShutdownHook;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -18,18 +24,30 @@ public class Client extends AbstractMojo {
     private final Logger logger;
     private final String IP = "192.168.2.17";
     private final int PORT = 6989;
-    private ArrayList<MessageListener> listeners;
-    private ServerType serverType;
+    private final ArrayList<MessageListener> listeners;
+    private final ServerType serverType;
+    private String name;
 
 
     public Client(ServerType serverType) {
-        listeners = new ArrayList<>();
+
         this.serverType = serverType;
+
+        listeners = new ArrayList<>();
         logger = new Logger("JadMBClient");
+
         if (startConnection()) {
             messageHandler = new MessageProcessor(this,clientSocket);
 
+            if (serverType.equals(ServerType.PROXY)) {
+                name = "velocity";
+            } else {
+                name = getIP();
+            }
+
             sendInitialMessage();
+
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook(this));
 
             logger.log("Started up correctly!");
         } else {
@@ -40,29 +58,29 @@ public class Client extends AbstractMojo {
     }
 
     private void sendInitialMessage() {
-        Message message = new Message();
-        message.setType(MessageTypes.INITIAL_MESSAGE);
-        ArrayList<String> arguments = new ArrayList<>();
-        if (serverType.equals(ServerType.PROXY)) {
-            message.setSender("velocity");
-            arguments.add("velocity");
-        } else {
-            message.setSender(getIP());
-            arguments.add(getIP());
-        }
 
+        Message message = new Message();
+        message.setType(MessageType.INITIAL_MESSAGE);
         message.setReceiver("MB");
 
+        // Arguments
+        ArrayList<String> arguments = new ArrayList<>();
+        message.setSender(getName());
+        arguments.add(getName());
+        arguments.add(serverType.toString());
         message.setArguments(arguments);
 
         sendMessage(message);
     }
 
-    public String getConnected() {
-        StringBuilder stringBuilder = new StringBuilder(String.valueOf(clientSocket.getInetAddress()));
-        stringBuilder.delete(0,1);
-
-        return stringBuilder.toString();
+    private boolean startConnection() {
+        try {
+            clientSocket = new Socket(IP,PORT);
+        } catch (IOException e) {
+            logger.error("Could not connect to server!");
+            return false;
+        }
+        return true;
     }
 
     public String getIP() {
@@ -80,33 +98,12 @@ public class Client extends AbstractMojo {
         return null;
     }
 
-    private boolean startConnection() {
-        try {
-            clientSocket = new Socket(IP,PORT);
-        } catch (IOException e) {
-            logger.error("Could not connect to server!");
-            return false;
-        }
-        return true;
-    }
-
     public void sendMessage(Message message) {
         try {
             messageHandler.sendMessage(message);
-            //log(message);
         } catch (IOException e) {
             logger.error("Could not send message!");
         }
-    }
-
-    private void log(Message message) {
-        logger.log("New message: ");
-        logger.log("Sender: " + message.getSender());
-        logger.log("Receiver: " + message.getReceiver());
-        logger.log(message.getType().toString());
-        try {
-            logger.log(message.getArguments().get(0));
-        } catch (NullPointerException ignored){}
     }
 
     public void addMessageListener(MessageListener messageListener) {
@@ -117,6 +114,10 @@ public class Client extends AbstractMojo {
 
     public ArrayList<MessageListener> getListeners() {
         return listeners;
+    }
+
+    public String getName() {
+        return name;
     }
 
     @Override
